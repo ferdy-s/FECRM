@@ -1,0 +1,360 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//////////////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////////////
+
+enum UserRole {
+  MARKETING
+  SALES
+  ADMIN
+  FINANCE
+  MANAGER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum DealStatus {
+  OPEN
+  NEGOTIATION
+  WON
+  LOST
+  INVOICED
+  PAID
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+}
+
+enum PaymentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ActivityType {
+  SYSTEM
+  NOTE
+  STATUS
+  ASSIGNMENT
+  COMMUNICATION
+  NEGOTIATION
+  FINANCE
+  CALL
+  MEETING
+  EMAIL
+}
+
+enum ItemType {
+  PRODUCT
+  SERVICE
+}
+
+enum CommunicationChannel {
+  WA
+  EMAIL
+  CALL
+}
+
+enum CommunicationStatus {
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum CommunicationDirection {
+  OUTBOUND
+  INBOUND
+}
+
+//////////////////////////////////////////////////
+// AUTH
+//////////////////////////////////////////////////
+
+model Auth {
+  id           String    @id @default(uuid())
+  userId       String    @unique
+  passwordHash String
+  refreshToken String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("auths")
+}
+
+//////////////////////////////////////////////////
+// CORE MODELS
+//////////////////////////////////////////////////
+
+model User {
+  id        String    @id @default(uuid())
+  name      String
+  email     String    @unique
+  role      UserRole
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  auth Auth?
+
+  leadsAssigned Lead[] @relation("LeadAssigned")
+  leadsCreated  Lead[] @relation("LeadCreated")
+
+  dealsAssigned Deal[] @relation("DealAssigned")
+  dealsCreated  Deal[] @relation("DealCreated")
+
+  activities       Activity[]
+  notifications    Notification[]
+  auditLogs        AuditLog[]
+  negotiations     NegotiationNote[]
+  verifiedPayments Payment[]
+
+  @@map("users")
+}
+
+model Lead {
+  id             String     @id @default(uuid())
+  name           String
+  contact        String
+  sourceId       String
+  assignedTo     String
+  createdBy      String
+  status         LeadStatus @default(NEW)
+  lastActivityAt DateTime?
+  createdAt      DateTime   @default(now())
+  deletedAt      DateTime?
+
+  source   LeadSource @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  assignee User       @relation("LeadAssigned", fields: [assignedTo], references: [id], onDelete: Restrict)
+  creator  User       @relation("LeadCreated", fields: [createdBy], references: [id], onDelete: Restrict)
+
+  activities     Activity[]
+  deals          Deal[]
+  communications CommunicationLog[]
+  negotiations   NegotiationNote[]
+
+  @@index([assignedTo])
+  @@index([status])
+  @@index([sourceId])
+  @@index([lastActivityAt])
+  @@map("leads")
+}
+
+model Activity {
+  id          String       @id @default(uuid())
+  leadId      String
+  userId      String
+  type        ActivityType
+  description String
+  createdAt   DateTime     @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Restrict)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([leadId])
+  @@index([createdAt])
+  @@map("activities")
+}
+
+model NegotiationNote {
+  id        String   @id @default(uuid())
+  leadId    String
+  userId    String
+  note      String
+  createdAt DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Restrict)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([leadId])
+  @@map("negotiation_notes")
+}
+
+model Deal {
+  id         String @id @default(uuid())
+  leadId     String @unique
+  assignedTo String
+  createdBy  String
+
+  value Decimal @db.Decimal(18, 2)
+
+  status DealStatus @default(OPEN)
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Restrict)
+
+  assignee User @relation("DealAssigned", fields: [assignedTo], references: [id], onDelete: Restrict)
+
+  creator User @relation("DealCreated", fields: [createdBy], references: [id], onDelete: Restrict)
+
+  items    TransactionItem[]
+  invoices Invoice[]
+
+  @@index([assignedTo])
+  @@index([status])
+  @@index([leadId])
+  @@index([createdAt])
+  @@map("deals")
+}
+
+model Invoice {
+  id        String        @id @default(uuid())
+  dealId    String
+  amount    Decimal       @db.Decimal(18, 2)
+  status    InvoiceStatus @default(PENDING)
+  issuedAt  DateTime      @default(now())
+  deletedAt DateTime?
+
+  deal     Deal      @relation(fields: [dealId], references: [id], onDelete: Restrict)
+  payments Payment[]
+
+  @@index([dealId])
+  @@index([issuedAt])
+  @@map("invoices")
+}
+
+model Payment {
+  id        String        @id @default(uuid())
+  invoiceId String
+  amount    Decimal       @db.Decimal(18, 2)
+  proofUrl  String
+  status    PaymentStatus @default(PENDING)
+
+  verifiedBy String?
+  verifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  verifier User? @relation(fields: [verifiedBy], references: [id])
+
+  @@index([invoiceId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("payments")
+}
+
+//////////////////////////////////////////////////
+// PRODUCT & SERVICE
+//////////////////////////////////////////////////
+
+model Product {
+  id    String  @id @default(uuid())
+  name  String
+  price Decimal @db.Decimal(18, 2)
+
+  @@map("products")
+}
+
+model Service {
+  id    String  @id @default(uuid())
+  name  String
+  price Decimal @db.Decimal(18, 2)
+
+  @@map("services")
+}
+
+model TransactionItem {
+  id String @id @default(uuid())
+
+  dealId String
+
+  type ItemType
+
+  refId String
+
+  quantity Int
+
+  price Decimal @db.Decimal(18, 2)
+
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Restrict)
+
+  @@index([dealId])
+  @@map("transaction_items")
+}
+
+//////////////////////////////////////////////////
+// COMMUNICATION ENGINE
+//////////////////////////////////////////////////
+
+model CommunicationLog {
+  id         String                 @id @default(uuid())
+  leadId     String
+  channel    CommunicationChannel
+  direction  CommunicationDirection
+  message    String
+  status     CommunicationStatus    @default(SENT)
+  externalId String?
+  createdAt  DateTime               @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Restrict)
+
+  @@index([leadId])
+  @@index([createdAt])
+  @@map("communication_logs")
+}
+
+//////////////////////////////////////////////////
+// SUPPORTING
+//////////////////////////////////////////////////
+
+model LeadSource {
+  id   String @id @default(uuid())
+  name String
+
+  leads Lead[]
+
+  @@map("lead_sources")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  entity    String
+  entityId  String
+  action    String
+  oldData   Json?
+  newData   Json?
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@map("audit_logs")
+}
