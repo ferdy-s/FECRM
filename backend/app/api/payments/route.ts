@@ -8,7 +8,7 @@ import { requireRole } from "@/middlewares/role.middleware";
 
 export const POST = withError(
   requireAuth(
-    requireRole(["ADMIN", "FINANCE"])(async (
+    requireRole(["ADMIN", "SALES", "MARKETING"])(async (
       req: Request
     ) => {
 

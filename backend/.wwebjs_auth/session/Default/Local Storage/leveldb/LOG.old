@@ -1,9 +1,0 @@
-2026/05/11-10:16:04.613 3df0 Reusing MANIFEST C:\Users\HP\fecrm\backend\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
-2026/05/11-10:16:04.638 3df0 Recovering log #4
-2026/05/11-10:16:04.643 3df0 Reusing old log C:\Users\HP\fecrm\backend\.wwebjs_auth\session\Default\Local Storage\leveldb/000004.log 
-2026/05/11-10:17:04.668 3d3c Level-0 table #8: started
-2026/05/11-10:17:04.683 3d3c Level-0 table #8: 17647 bytes OK
-2026/05/11-10:17:04.689 3d3c Delete type=0 #4
-2026/05/11-15:32:07.407 3df0 Level-0 table #10: started
-2026/05/11-15:32:07.437 3df0 Level-0 table #10: 17747 bytes OK
-2026/05/11-15:32:07.445 3df0 Delete type=0 #7

@@ -26,10 +26,15 @@ export const POST = withError(
 
 // GET DEALS
 export const GET = withError(
-  requireAuth(async () => {
+  requireAuth(async (req: Request) => {
 
-    const deals = await dealService.list();
+    const user =
+      (req as any).user;
+
+    const deals =
+      await dealService.list(user);
 
     return success(deals);
+
   })
 );

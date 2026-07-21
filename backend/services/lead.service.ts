@@ -3,9 +3,20 @@ import { activityService } from "./activity.service";
 
 export const leadService = {
   async create(data: any, user: any) {
-    if (!data.name || !data.contact || !data.sourceId || !data.assignedTo) {
-      throw new Error("Missing required fields");
-    }
+   if (
+  !data.name ||
+  !data.sourceId ||
+  !data.assignedTo
+) {
+  throw new Error("Missing required fields");
+}
+
+if (
+  data.email &&
+  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)
+) {
+  throw new Error("Invalid email format");
+}
 
     // VALIDATE USER
     const assignedUser = await prisma.user.findUnique({
@@ -17,32 +28,65 @@ export const leadService = {
     }
 
     // CREATE LEAD
-    const lead = await prisma.lead.create({
-      data: {
-        name: data.name,
-        contact: data.contact,
+  const lead = await prisma.lead.create({
+  data: {
+    //////////////////////////////////////////////////
+    // BASIC INFORMATION
+    //////////////////////////////////////////////////
 
-        source: {
-          connect: {
-            id: data.sourceId,
-          },
-        },
+    name: data.name,
 
-        assignee: {
-          connect: {
-            id: data.assignedTo,
-          },
-        },
+    company: data.company,
 
-        creator: {
-          connect: {
-            id: user.userId,
-          },
-        },
+    email: data.email,
 
-        lastActivityAt: new Date(),
+    phone: data.phone,
+
+    //////////////////////////////////////////////////
+    // ADDRESS
+    //////////////////////////////////////////////////
+
+    address: data.address,
+
+    district: data.district,
+
+    city: data.city,
+
+    province: data.province,
+
+    postalCode: data.postalCode,
+
+    country: data.country ?? "Indonesia",
+
+    //////////////////////////////////////////////////
+    // RELATION
+    //////////////////////////////////////////////////
+
+    source: {
+      connect: {
+        id: data.sourceId,
       },
-    });
+    },
+
+    assignee: {
+      connect: {
+        id: data.assignedTo,
+      },
+    },
+
+    creator: {
+      connect: {
+        id: user.userId,
+      },
+    },
+
+    //////////////////////////////////////////////////
+    // SYSTEM
+    //////////////////////////////////////////////////
+
+    lastActivityAt: new Date(),
+  },
+});
 
     // ACTIVITY LOG
     await activityService.log({
@@ -120,6 +164,270 @@ export const leadService = {
     return lead;
   },
 
+  async detail(id: string) {
+
+  const lead =
+    await prisma.lead.findUnique({
+
+      where: {
+        id,
+      },
+
+     include: {
+
+  source: true,
+
+  assignee: true,
+
+  creator: true,
+
+  activities: true,
+
+  communications: true,
+
+  deals: {
+
+    include: {
+
+      items: true,
+
+      invoices: true,
+
+      negotiations: true,
+
+    },
+
+  },
+
+},
+
+    });
+
+  if (!lead) {
+    throw new Error(
+      "Lead not found"
+    );
+  }
+
+  return lead;
+},
+
+async update(
+  leadId: string,
+  data: any,
+  user: any,
+) {
+
+  //////////////////////////////////////////////////
+// VALIDATE LEAD
+//////////////////////////////////////////////////
+
+const existingLead =
+  await prisma.lead.findUnique({
+
+    where: {
+      id: leadId,
+    },
+
+    include: {
+      deals: true,
+    },
+
+  });
+
+if (!existingLead) {
+  throw new Error(
+    "Lead not found",
+  );
+}
+
+//////////////////////////////////////////////////
+// LOCK LEAD
+//////////////////////////////////////////////////
+
+if (
+  existingLead.deals.length > 0
+) {
+  throw new Error(
+    "Lead has been converted to Deal and can no longer be modified.",
+  );
+}
+
+  //////////////////////////////////////////////////
+  // VALIDATE ASSIGNEE
+  //////////////////////////////////////////////////
+
+  const assignedUser =
+    await prisma.user.findUnique({
+      where: {
+        id: data.assignedTo,
+      },
+    });
+
+  if (!assignedUser) {
+    throw new Error(
+      "Assigned user not found",
+    );
+  }
+
+  //////////////////////////////////////////////////
+  // VALIDATE SOURCE
+  //////////////////////////////////////////////////
+
+  const source =
+    await prisma.leadSource.findUnique({
+      where: {
+        id: data.sourceId,
+      },
+    });
+
+  if (!source) {
+    throw new Error(
+      "Lead source not found",
+    );
+  }
+
+  //////////////////////////////////////////////////
+  // EMAIL VALIDATION
+  //////////////////////////////////////////////////
+
+  if (
+    data.email &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+      data.email,
+    )
+  ) {
+    throw new Error(
+      "Invalid email format",
+    );
+  }
+
+  //////////////////////////////////////////////////
+  // UPDATE LEAD
+  //////////////////////////////////////////////////
+
+  await prisma.lead.update({
+
+    where: {
+      id: leadId,
+    },
+
+    data: {
+
+      //////////////////////////////////////////////////
+      // BASIC
+      //////////////////////////////////////////////////
+
+      name: data.name,
+
+      company: data.company,
+
+      email: data.email,
+
+      phone: data.phone,
+
+      //////////////////////////////////////////////////
+      // ADDRESS
+      //////////////////////////////////////////////////
+
+      address: data.address,
+
+      district: data.district,
+
+      city: data.city,
+
+      province: data.province,
+
+      postalCode: data.postalCode,
+
+      country:
+        data.country ??
+        "Indonesia",
+
+      //////////////////////////////////////////////////
+      // RELATION
+      //////////////////////////////////////////////////
+
+      source: {
+        connect: {
+          id: data.sourceId,
+        },
+      },
+
+      assignee: {
+        connect: {
+          id: data.assignedTo,
+        },
+      },
+
+      //////////////////////////////////////////////////
+      // STATUS
+      //////////////////////////////////////////////////
+
+      status: data.status,
+
+      //////////////////////////////////////////////////
+      // ACTIVITY
+      //////////////////////////////////////////////////
+
+      lastActivityAt:
+        new Date(),
+
+    },
+
+  });
+
+  //////////////////////////////////////////////////
+  // ACTIVITY LOG
+  //////////////////////////////////////////////////
+
+  await activityService.log({
+
+    leadId,
+
+    userId:
+      user.userId,
+
+    type: "SYSTEM",
+
+    description:
+      "Lead information updated",
+
+  });
+
+  //////////////////////////////////////////////////
+  // AUDIT LOG
+  //////////////////////////////////////////////////
+
+  await prisma.auditLog.create({
+
+    data: {
+
+      entity: "Lead",
+
+      entityId: leadId,
+
+      action: "UPDATE",
+
+      userId:
+        user.userId,
+
+      newData: data,
+
+    },
+
+  });
+
+  //////////////////////////////////////////////////
+  // RETURN DETAIL
+  //////////////////////////////////////////////////
+
+  return this.detail(
+    leadId,
+  );
+
+},
+
   async updateStatus(leadId: string, status: any, user: any) {
     // VALIDATE LEAD
     const existingLead = await prisma.lead.findUnique({
@@ -165,26 +473,49 @@ export const leadService = {
   },
 
   async list(user: any) {
-    if (user.role === "MANAGER" || user.role === "ADMIN") {
-      return prisma.lead.findMany({
-        include: {
-          assignee: true,
-          source: true,
-        },
-      });
-    }
+
+  //////////////////////////////////////////////////
+  // ADMIN / MANAGER / MARKETING
+  //////////////////////////////////////////////////
+
+  if (
+    user.role === "ADMIN" ||
+    user.role === "MANAGER" ||
+    user.role === "MARKETING"
+  ) {
 
     return prisma.lead.findMany({
-      where: {
-        assignedTo: user.userId,
-      },
-
       include: {
         assignee: true,
         source: true,
       },
+
+      orderBy: {
+        createdAt: "desc",
+      },
     });
-  },
+
+  }
+
+  //////////////////////////////////////////////////
+  // SALES
+  //////////////////////////////////////////////////
+
+  return prisma.lead.findMany({
+    where: {
+      assignedTo: user.userId,
+    },
+
+    include: {
+      assignee: true,
+      source: true,
+    },
+
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+},
 
  async timeline(leadId: string) {
   const [activities, communications] = await Promise.all([

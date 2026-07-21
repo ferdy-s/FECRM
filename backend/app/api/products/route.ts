@@ -8,7 +8,7 @@ import { withError } from "@/middlewares/error.middleware";
 
 export const POST = withError(
   requireAuth(
-    requireRole(["ADMIN"])(async (req: Request) => {
+    requireRole(["ADMIN","MANAGER"])(async (req: Request) => {
       const body = await req.json();
 
       const product =

@@ -8,7 +8,7 @@ import { requireRole } from "@/middlewares/role.middleware";
 
 export const POST = withError(
   requireAuth(
-    requireRole(["ADMIN", "FINANCE"])(async (
+    requireRole(["FINANCE"])(async (
       req: Request
     ) => {
 
@@ -18,7 +18,7 @@ export const POST = withError(
 
       const invoice =
         await invoiceService.create(
-          body.dealId,
+          body,
           user
         );
 

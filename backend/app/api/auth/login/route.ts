@@ -1,4 +1,4 @@
-import "@/lib/init";
+
 import { authService } from "@/services/auth.service";
 import { success, error } from "@/lib/response";
 import { withError } from "@/middlewares/error.middleware";

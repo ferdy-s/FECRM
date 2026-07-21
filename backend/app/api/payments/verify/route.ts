@@ -5,6 +5,7 @@ import { success } from "@/lib/response";
 import { withError } from "@/middlewares/error.middleware";
 import { requireAuth } from "@/middlewares/auth.middleware";
 import { requireRole } from "@/middlewares/role.middleware";
+import { prisma } from "@/lib/prisma";
 
 export const PATCH = withError(
   requireAuth(
@@ -23,13 +24,16 @@ export const PATCH = withError(
           user
         );
 
-      return success({
-        paymentStatus: payment.status,
-        invoiceStatus:
-          body.status === "VERIFIED"
-            ? "PAID"
-            : "PENDING",
-      });
+     const invoice = await prisma.invoice.findUnique({
+  where: {
+    id: payment.invoiceId,
+  },
+});
+
+return success({
+  paymentStatus: payment.status,
+  invoiceStatus: invoice?.status,
+});
     })
   )
 );

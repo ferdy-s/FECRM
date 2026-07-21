@@ -23,20 +23,16 @@ export const GET = withError(
 
 export const PATCH = withError(
   requireAuth(
-    requireRole(["ADMIN"])(async (
+    requireRole(["ADMIN", "MANAGER"])(async (
       req: Request,
       context: { params: Promise<{ id: string }> }
     ) => {
-
       const body = await req.json();
 
       const { id } = await context.params;
 
       const product =
-        await productService.update(
-          id,
-          body
-        );
+        await productService.update(id, body);
 
       return success(product);
     })
@@ -45,7 +41,7 @@ export const PATCH = withError(
 
 export const DELETE = withError(
   requireAuth(
-    requireRole(["ADMIN"])(async (
+    requireRole(["ADMIN", "MANAGER"])(async (
       req: Request,
       context: { params: Promise<{ id: string }> }
     ) => {

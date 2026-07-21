@@ -5,14 +5,10 @@ import { withError } from "@/middlewares/error.middleware";
 import { automationService } from "@/services/automation.service";
 
 export const POST = withError(async () => {
-  const followup =
-    await automationService.followUpReminder();
 
-  const inactive =
-    await automationService.inactiveLeadEscalation();
+  const result =
+    await automationService.runAll();
 
-  return success({
-    followup,
-    inactive,
-  });
+  return success(result);
+
 });

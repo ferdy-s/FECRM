@@ -84,21 +84,235 @@ export const reportService = {
       const totalDeals =
         user.dealsAssigned.length;
 
-      const totalRevenue =
-        user.dealsAssigned.reduce(
-          (sum: number, deal: any) =>
-            sum + Number(deal.value),
-          0
-        );
+      const activeDeals =
+        user.dealsAssigned;
+
+      const pipelineValue =
+  activeDeals.reduce(
+    (sum, deal) =>
+      sum + Number(deal.value),
+    0
+  );
+
+     const collectedRevenue =
+  activeDeals.reduce(
+    (sum, deal) =>
+      sum + Number(deal.collectedAmount),
+    0
+  );
+
+      const outstandingRevenue =
+  activeDeals.reduce(
+    (sum, deal) =>
+      sum + Number(deal.outstandingAmount),
+    0
+  );
 
       return {
         salesId: user.id,
         salesName: user.name,
+
         totalDeals,
-        totalRevenue,
+
+        pipelineValue,
+
+        collectedRevenue,
+
+        outstandingRevenue,
       };
     });
   },
+
+  async collectionRevenue() {
+
+    const result =
+      await prisma.deal.aggregate({
+        _sum: {
+          collectedAmount: true,
+        },
+      });
+
+    return {
+      collectedRevenue:
+        Number(
+          result._sum.collectedAmount ?? 0
+        ),
+    };
+  },
+
+  async outstandingRevenue() {
+
+    const result =
+      await prisma.deal.aggregate({
+        _sum: {
+          outstandingAmount: true,
+        },
+      });
+
+    return {
+      outstandingRevenue:
+        Number(
+          result._sum.outstandingAmount ?? 0
+        ),
+    };
+  },
+
+  async collectionRate() {
+
+    const result =
+      await prisma.deal.aggregate({
+        _sum: {
+          collectedAmount: true,
+          value: true,
+        },
+      });
+
+    const collectedRevenue =
+      Number(
+        result._sum.collectedAmount ?? 0
+      );
+
+    const totalRevenue =
+      Number(
+        result._sum.value ?? 0
+      );
+
+    const collectionRate =
+      totalRevenue === 0
+        ? 0
+        : (collectedRevenue / totalRevenue) * 100;
+
+    return {
+      totalRevenue,
+      collectedRevenue,
+      collectionRate:
+        Number(collectionRate.toFixed(2)),
+    };
+  },
+
+  async collectionDashboard() {
+
+  //////////////////////////////////////////////////
+  // RECEIVABLE
+  //////////////////////////////////////////////////
+
+  const receivable =
+    await prisma.deal.aggregate({
+      _sum: {
+        value: true,
+      },
+    });
+
+  //////////////////////////////////////////////////
+  // COLLECTED
+  //////////////////////////////////////////////////
+
+  const collected =
+    await prisma.deal.aggregate({
+      _sum: {
+        collectedAmount: true,
+      },
+    });
+
+  //////////////////////////////////////////////////
+  // OUTSTANDING
+  //////////////////////////////////////////////////
+
+  const outstanding =
+    await prisma.deal.aggregate({
+      _sum: {
+        outstandingAmount: true,
+      },
+    });
+
+  //////////////////////////////////////////////////
+  // OVERDUE
+  //////////////////////////////////////////////////
+
+  const overdueInvoices =
+    await prisma.invoice.findMany({
+      where: {
+        status: "OVERDUE",
+      },
+    });
+
+  const totalOverdue =
+    overdueInvoices.reduce(
+      (sum, invoice) =>
+        sum +
+        Number(
+          invoice.remainingAmount
+        ),
+      0
+    );
+
+  //////////////////////////////////////////////////
+  // COLLECTION RATE
+  //////////////////////////////////////////////////
+
+  const totalReceivable =
+    Number(
+      receivable._sum.value ?? 0
+    );
+
+  const totalCollected =
+    Number(
+      collected._sum
+        .collectedAmount ?? 0
+    );
+
+  const collectionRate =
+    totalReceivable === 0
+      ? 0
+      : (
+          totalCollected /
+          totalReceivable
+        ) * 100;
+
+  //////////////////////////////////////////////////
+  // OVERDUE DEAL COUNT
+  //////////////////////////////////////////////////
+
+  const overdueDealIds =
+    new Set(
+      overdueInvoices.map(
+        (invoice) =>
+          invoice.dealId
+      )
+    );
+
+  //////////////////////////////////////////////////
+  // RESPONSE
+  //////////////////////////////////////////////////
+
+  return {
+    receivable:
+      totalReceivable,
+
+    collected:
+      totalCollected,
+
+    outstanding:
+      Number(
+        outstanding._sum
+          .outstandingAmount ?? 0
+      ),
+
+    overdue:
+      totalOverdue,
+
+    collectionRate:
+      Number(
+        collectionRate.toFixed(2)
+      ),
+
+    overdueInvoices:
+      overdueInvoices.length,
+
+    overdueDeals:
+      overdueDealIds.size,
+  };
+},
 
   async sourceEffectiveness() {
 

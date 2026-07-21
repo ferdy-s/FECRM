@@ -1,0 +1,24 @@
+import { z } from "zod";
+
+//////////////////////////////////////////////////////
+// SCHEMA
+//////////////////////////////////////////////////////
+
+export const rejectPaymentSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .max(
+      500,
+      "Reason cannot exceed 500 characters",
+    )
+    .optional()
+    .or(z.literal("")),
+});
+
+//////////////////////////////////////////////////////
+// TYPE
+//////////////////////////////////////////////////////
+
+export type RejectPaymentFormValues =
+  z.infer<typeof rejectPaymentSchema>;

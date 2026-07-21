@@ -1,36 +1,505 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FECRM Backend
 
-## Getting Started
+Future Enterprise CRM (FECRM) adalah platform Customer Relationship Management (CRM) berbasis web yang dirancang untuk mengelola seluruh siklus pelanggan mulai dari akuisisi prospek (Lead), proses penjualan (Deal), negosiasi harga, komunikasi pelanggan, pembuatan invoice, pengelolaan pembayaran, hingga proses collection dan monitoring transaksi secara terintegrasi.
 
-First, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+# Business Scope
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+FECRM mendukung proses bisnis B2B yang membutuhkan:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+* Lead Management
+* Sales Pipeline
+* Product & Service Transaction
+* Negotiation Approval Workflow
+* Invoice Management
+* Collection Management
+* Payment Verification
+* Communication Tracking
+* Audit & Compliance Monitoring
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
+# Technology Stack
 
-To learn more about Next.js, take a look at the following resources:
+## Backend
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+* Next.js API Route
+* TypeScript
+* Prisma ORM
+* PostgreSQL
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Authentication
 
-## Deploy on Vercel
+* JWT Access Token
+* Refresh Token
+* Role Based Access Control (RBAC)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Payment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+* Midtrans QRIS
+* Manual Transfer
+
+## Communication
+
+* Email Gateway
+* WhatsApp Gateway
+
+
+# User Roles
+
+FECRM menggunakan 5 level role utama.
+
+## MARKETING
+
+Bertanggung jawab memperoleh dan mengelola prospek awal.
+
+Hak Akses:
+
+* Create Lead
+* Update Lead
+* View Lead
+* Manage Lead Source
+* Create Activity
+* Create Communication
+* View Negotiation Notes
+
+Tidak dapat:
+
+* Approve Negotiation
+* Verify Payment
+* Manage Invoice
+
+
+## SALES
+
+Bertanggung jawab mengelola pelanggan hingga menjadi transaksi.
+
+Hak Akses:
+
+* Semua akses Marketing
+* Create Deal
+* Attach Product
+* Attach Service
+* Request Negotiation
+* Create Invoice
+* View Collection Status
+
+Tidak dapat:
+
+* Approve Negotiation
+* Verify Payment
+
+
+## MANAGER
+
+Bertanggung jawab melakukan kontrol dan persetujuan.
+
+Hak Akses:
+
+* View All Leads
+* View All Deals
+* Approve Negotiation
+* Reject Negotiation
+* Monitoring Dashboard
+
+
+## FINANCE
+
+Bertanggung jawab mengelola pembayaran dan collection.
+
+Hak Akses:
+
+* Verify Payment
+* Reject Payment
+* Collection Monitoring
+* Finance Dashboard
+* Invoice Monitoring
+
+
+## ADMIN
+
+Bertanggung jawab terhadap konfigurasi sistem.
+
+Hak Akses:
+
+* Manage Users
+* Manage Roles
+* Manage Lead Sources
+* View Audit Logs
+* Full System Access
+
+
+# Core Modules
+
+## Authentication
+
+Entity:
+
+* User
+* Auth
+
+Fitur:
+
+* Login
+* Refresh Token
+* Logout
+* Change Password
+
+
+## Lead Management
+
+Entity:
+
+* Lead
+* LeadSource
+
+Fitur:
+
+* Create Lead
+* Assign Lead
+* Update Lead Status
+* Lead Timeline
+* Lead Detail
+
+Status:
+
+* NEW
+* CONTACTED
+* NEGOTIATION
+* WON
+* LOST
+
+Alamat Lead:
+
+* Address
+* District
+* City
+* Province
+* Postal Code
+* Country
+
+
+## Activity Timeline
+
+Entity:
+
+* Activity
+
+Fitur:
+
+* Activity Logging
+* Timeline Tracking
+* User Tracking
+
+Jenis Aktivitas:
+
+* SYSTEM
+* NOTE
+* STATUS
+* ASSIGNMENT
+* COMMUNICATION
+* NEGOTIATION
+* FINANCE
+* CALL
+* MEETING
+* EMAIL
+
+
+## Communication Engine
+
+Entity:
+
+* CommunicationLog
+
+Channel:
+
+* WhatsApp
+* Email
+* Call
+
+Direction:
+
+* OUTBOUND
+* INBOUND
+
+Status:
+
+* SENT
+* DELIVERED
+* READ
+* FAILED
+
+Fitur:
+
+* Send Email
+* Send WhatsApp
+* Communication History
+* Customer Interaction Tracking
+
+
+## Negotiation Module
+
+Entity:
+
+* NegotiationNote
+* NegotiationRequest
+
+Workflow:
+
+Sales
+→ Request Negotiation
+
+Manager
+→ Approve / Reject
+
+System
+→ Update Transaction Price
+
+Status:
+
+* PENDING
+* APPROVED
+* REJECTED
+
+Fitur:
+
+* Negotiation Approval
+* Saving Calculation
+* Negotiation History
+
+
+## Deal Management
+
+Entity:
+
+* Deal
+
+Fitur:
+
+* Create Deal
+* Deal Assignment
+* Product Attachment
+* Service Attachment
+* Collection Tracking
+
+Status:
+
+* OPEN
+* NEGOTIATION
+* WON
+* LOST
+
+Collection:
+
+* UNPAID
+* PARTIAL
+* PAID
+
+## Product & Service Catalog
+
+Entity:
+
+* Product
+* Service
+
+Fitur:
+
+* Product Management
+* Service Management
+* Pricing Management
+
+## Transaction Item Engine
+
+Entity:
+
+* TransactionItem
+
+Fungsi:
+
+Menyimpan snapshot item transaksi yang digunakan dalam Deal.
+
+Mendukung:
+
+* Product
+* Service
+* Negotiation
+
+## Invoice Engine
+
+Entity:
+
+* Invoice
+* InvoiceItem
+
+Jenis Invoice:
+
+### MASTER
+
+Dokumen induk transaksi.
+
+Berisi:
+
+* Nilai kontrak
+* Item transaksi
+* Riwayat negosiasi
+* Jadwal termin
+
+### TERMIN
+
+Invoice penagihan individual.
+
+Berisi:
+
+* Persentase termin
+* QRIS
+* Status pembayaran
+
+Status:
+
+* DRAFT
+* UNPAID
+* PARTIAL
+* PAID
+* OVERDUE
+* CANCELLED
+
+
+# Invoice Hierarchy
+
+MASTER INVOICE
+
+├── TERMIN 1
+
+├── TERMIN 2
+
+└── TERMIN 3
+
+Setiap Termin Invoice terhubung ke Master Invoice menggunakan parentInvoiceId.
+
+
+## Payment Engine
+
+Entity:
+
+* Payment
+
+Metode:
+
+* Qr Scan
+* Cash
+
+Status:
+
+* PENDING
+* VERIFIED
+* REJECTED
+
+Fitur:
+
+* Upload Proof
+* Verify Payment
+* Payment History
+* Collection Update
+
+
+## Collection Engine
+
+Entity:
+
+* Deal
+* Invoice
+* Payment
+
+Fitur:
+
+* Outstanding Monitoring
+* Collected Amount
+* Remaining Amount
+* Collection Dashboard
+
+
+## Notification System
+
+Entity:
+
+* Notification
+
+Fitur:
+
+* Real Time Notification
+* Payment Alert
+* Negotiation Alert
+* Assignment Alert
+
+
+## Audit Trail
+
+Entity:
+
+* AuditLog
+
+Fitur:
+
+* Create Tracking
+* Update Tracking
+* Delete Tracking
+* Approval Tracking
+
+Digunakan untuk kebutuhan compliance dan monitoring aktivitas pengguna.
+
+
+# Database Overview
+
+Total Entity:
+
+* User
+* Auth
+* Lead
+* LeadSource
+* Activity
+* NegotiationNote
+* NegotiationRequest
+* Deal
+* TransactionItem
+* Product
+* Service
+* Invoice
+* InvoiceItem
+* Payment
+* CommunicationLog
+* Notification
+* AuditLog
+
+Total: 17 Entity
+
+
+# Business Flow
+
+Lead
+↓
+Communication
+↓
+Negotiation
+↓
+Deal
+↓
+Product / Service Attachment
+↓
+Negotiation Approval
+↓
+Invoice Creation
+↓
+Payment
+↓
+Verification
+↓
+Collection
+↓
+Completed
+
+
+# FECRM Philosophy
+
+One Platform.
+Every Customer Journey.
+
+Mulai dari prospek pertama hingga pembayaran terakhir pelanggan dikelola dalam satu platform terintegrasi.

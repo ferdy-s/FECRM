@@ -1,10 +1,12 @@
+import { ActivityType } from "@prisma/client";
+
 import { prisma } from "@/lib/prisma";
 
 export const activityService = {
   async log(data: {
     leadId: string;
     userId: string;
-    type: any;
+    type: ActivityType;
     description: string;
   }) {
     // CREATE ACTIVITY

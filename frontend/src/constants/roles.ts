@@ -1,0 +1,7 @@
+export enum Role {
+  ADMIN = "ADMIN",
+  MANAGER = "MANAGER",
+  MARKETING = "MARKETING",
+  SALES = "SALES",
+  FINANCE = "FINANCE",
+}

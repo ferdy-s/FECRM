@@ -7,11 +7,18 @@ import { withError } from "@/middlewares/error.middleware";
 
 export const POST = withError(
   requireAuth(async (req: Request) => {
+
+    const user = (req as any).user;
+
     const body = await req.json();
 
-    const item =
-      await dealItemService.attachProduct(body);
+    const result =
+      await dealItemService.attachProduct(
+        body,
+        user,
+      );
 
-    return success(item, 201);
-  })
+    return success(result, 201);
+
+  }),
 );
