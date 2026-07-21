@@ -110,9 +110,9 @@ export function InvoiceHeaderCard({
             >
 
               <Link
-                href={`http://localhost:3000/api/invoices/${invoice.id}/pdf`}
-                target="_blank"
-              >
+  href={`${process.env.NEXT_PUBLIC_API_URL}/api/invoices/${invoice.id}/pdf`}
+  target="_blank"
+>
 
                 <FileText
                   className="
