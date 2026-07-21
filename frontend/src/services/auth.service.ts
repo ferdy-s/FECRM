@@ -8,7 +8,7 @@ export const authService = {
   ): Promise<LoginResponse> {
 
     const response = await fetch(
-      `${API_URL}/api/auth/login`,
+      `${API_URL}/auth/login`,
       {
         method: "POST",
         headers: {
