@@ -1,3 +1,6 @@
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 import {
   invoicePdfService,
 } from "@/services/invoice-pdf.service";
