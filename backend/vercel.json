@@ -1,0 +1,9 @@
+{
+  "functions": {
+    "src/app/api/invoices/[id]/route.ts": {
+      "includeFiles": [
+        "node_modules/@sparticuz/chromium/bin/**"
+      ]
+    }
+  }
+}
