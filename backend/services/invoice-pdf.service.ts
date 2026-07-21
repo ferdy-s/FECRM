@@ -1,61 +1,41 @@
-import puppeteer from "puppeteer";
+import chromium from "@sparticuz/chromium";
+import puppeteer from "puppeteer-core";
 
-import {
-  invoiceBreakdownService,
-} from "./invoice-breakdown.service";
-
-import {
-  invoiceTemplateService,
-} from "./invoice-template.service";
+import { invoiceBreakdownService } from "./invoice-breakdown.service";
+import { invoiceTemplateService } from "./invoice-template.service";
 
 export const invoicePdfService = {
+  async generate(invoiceId: string): Promise<Buffer> {
+    const invoice = await invoiceBreakdownService.detail(invoiceId);
 
-  async generate(
-    invoiceId:string
-  ){
+    console.log(JSON.stringify(invoice, null, 2));
 
-    const invoice =
-      await invoiceBreakdownService.detail(
-        invoiceId
-      );
-
-      console.log(
-  JSON.stringify(
-    invoice,
-    null,
-    2
-  )
-);
-
-   const html =
-  await invoiceTemplateService.render(
-    invoice
-  );
+    const html = await invoiceTemplateService.render(invoice);
 
     const browser = await puppeteer.launch({
-  headless: true,
+      args: chromium.args,
+      executablePath: await chromium.executablePath(),
+      headless: true,
+    });
 
-  executablePath:
-    "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
-});
+    try {
+      const page = await browser.newPage();
 
-    const page =
-      await browser.newPage();
+      await page.setContent(html);
 
-   await page.setContent(html);
+      await page.waitForNetworkIdle();
 
-await page.waitForNetworkIdle();
+      await page.emulateMediaType("screen");
 
-    const pdf =
-      await page.pdf({
-        format:"A4",
-        printBackground:true
+      const pdf = await page.pdf({
+        format: "A4",
+        printBackground: true,
+        preferCSSPageSize: true,
       });
 
-    await browser.close();
-
-    return Buffer.from(pdf);
-
-  }
-
+      return Buffer.from(pdf);
+    } finally {
+      await browser.close();
+    }
+  },
 };
