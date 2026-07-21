@@ -12,9 +12,7 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
 
     "/app/api/invoices/[id]/route": [
-
       "./node_modules/@sparticuz/chromium/bin/**"
-
     ],
 
   },
