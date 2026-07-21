@@ -1,15 +1,23 @@
 import type { NextConfig } from "next";
 
+
 const nextConfig: NextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination:
-          "http://localhost:3001/api/:path*",
-      },
-    ];
+
+  serverExternalPackages: [
+    "@sparticuz/chromium",
+    "puppeteer-core",
+  ],
+
+
+  outputFileTracingIncludes: {
+
+    "/app/api/invoices/[id]/route": [
+      "./node_modules/@sparticuz/chromium/bin/**"
+    ],
+
   },
+
 };
+
 
 export default nextConfig;
