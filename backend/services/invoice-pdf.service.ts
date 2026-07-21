@@ -79,11 +79,17 @@ export const invoicePdfService = {
 
 
       await page.setContent(
-        html,
-        {
-          waitUntil: "networkidle0",
-        }
-      );
+  html,
+  {
+    waitUntil: "load",
+  }
+);
+
+
+await page.waitForNetworkIdle({
+  idleTime: 500,
+  timeout: 10000,
+});
 
 
       await page.emulateMediaType(
