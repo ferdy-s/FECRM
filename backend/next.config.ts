@@ -8,6 +8,17 @@ const nextConfig: NextConfig = {
     "puppeteer-core",
   ],
 
+
+  outputFileTracingIncludes: {
+
+    "/app/api/invoices/[id]/route": [
+
+      "./node_modules/@sparticuz/chromium/bin/**"
+
+    ],
+
+  },
+
 };
 
 
