@@ -112,7 +112,7 @@ export function TopPerformance() {
       </CardHeader>
 
       <CardContent className="p-0">
-        <ScrollArea className="h-[340px]">
+        <ScrollArea className="h-[490px]">
           <div className="space-y-4 p-6 pt-0">
             {sales.map((item, index) => (
               <div
