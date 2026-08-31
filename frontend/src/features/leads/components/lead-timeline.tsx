@@ -163,7 +163,7 @@ export function LeadTimeline({
 
         <ScrollArea
           className="
-            h-[680px]
+            h-[820px]
             pr-4
           "
         >
