@@ -58,7 +58,7 @@ export function RevenueOverview({
 
       <CardContent className="p-0">
 
-        <ScrollArea className="h-[340px]">
+        <ScrollArea className="h-[490px]">
 
           <div className="space-y-6 px-6 pb-6">
 
